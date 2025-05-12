@@ -7,25 +7,25 @@ const penyakitData = {
   "ABAES PERITONAILER": [1, 2, 7, 14, 16, 22],
   "BAROTITIS MEDIA": [2, 6],
   "DEVIASI SEPTUM": [1, 5, 6, 15, 25, 29],
-  FARINGITIS: [1, 3, 7, 13, 14],
+  "FARINGITIS": [1, 3, 7, 13, 14],
   "KANKER LARING": [3, 4, 7, 13, 16, 23, 24],
   "KANKER LEHER DAN KEPALA": [3, 12, 15, 21, 30, 31],
   "KANKER LEHER METASTATIK": [12],
   "KANKER NASOFARING": [5, 15],
   "KANKER TONSIL": [7, 12],
-  LARINGITIS: [1, 3, 14, 19, 37],
+  "LARINGITIS": [1, 3, 14, 19, 37],
   "NEURONITIS VESTIBULARIS": [10, 17],
-  OSTEOSKLEROSIS: [20, 35],
+  "OSTEOSKLEROSIS": [20, 35],
   "OTITIS MEDIA AKUT": [1, 6, 10, 32],
-  MENIERE: [6, 10, 34, 36],
-  TONSILITIS: [1, 2, 3, 4, 7, 10],
+  "MENIERE": [6, 10, 34, 36],
+  "TONSILITIS": [1, 2, 3, 4, 7, 10],
   "TUMOR SYARAF PENDENGARAN": [2, 20, 38],
   "VERTIGO POSTULAR": [17],
   "SINUSITIS MAKSILARIS": [1, 2, 4, 5, 8, 9, 11, 28, 33],
   "SINUSITIS FRONTALIS": [1, 2, 4, 5, 8, 9, 11, 18],
   "SINUSITIS ETMOIDALIS": [1, 2, 4, 5, 8, 9, 11, 18, 26, 27],
   "SINUSITIS SFENOIDALIS": [1, 2, 4, 5, 6, 8, 9, 11, 12],
-  PERUT: [1, 2, 3, 4],
+  "PERUT": [1, 2, 3, 4],
 };
 
 const gejalaList = {
@@ -83,12 +83,23 @@ function App() {
     const hasilDeteksi = Object.entries(penyakitData)
       .map(([nama, gejala]) => {
         const cocok = gejala.filter((g) => selectedGejala.includes(g));
-        return { nama, totalCocok: cocok.length, totalGejala: gejala.length };
+        const persentase = Math.round((cocok.length / gejala.length) * 100);
+        return {
+          nama,
+          totalCocok: cocok.length,
+          totalGejala: gejala.length,
+          persentase,
+        };
       })
       .filter((item) => item.totalCocok > 0)
-      .sort((a, b) => b.totalCocok - a.totalCocok);
+      const maxPersen = Math.max(...hasilDeteksi.map((item) => item.persentase));
+      
+      // Filter hanya penyakit yang persentasenya sama atau dekat dengan tertinggi (selisih ≤ 10%)
+      const hasilTerpilih = hasilDeteksi
+        .filter((item) => item.persentase >= maxPersen - 10)
+        .sort((a, b) => b.persentase - a.persentase || b.totalCocok - a.totalCocok);
 
-    setHasil(hasilDeteksi.slice(0, 1));
+    setHasil(hasilTerpilih);
   };
 
   return (
@@ -115,7 +126,13 @@ function App() {
           {hasil.length === 0 ? (
             <span className="text-muted">Tidak ada penyakit terdeteksi.</span>
           ) : (
-            <span>Kemungkinan: {hasil[0].nama}</span>
+            <ul>
+              {hasil.map((item, index) => (
+                <li key={index}>
+                  {item.nama} - {item.persentase}% cocok ({item.totalCocok}/{item.totalGejala} gejala)
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>
